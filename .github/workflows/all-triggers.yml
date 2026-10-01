@@ -1,1 +1,66 @@
+name: All Common Triggers Demo
 
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Choose environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      reason:
+        description: 'Why are you running this?'
+        required: false
+        type: string
+
+  schedule:
+    - cron: '0 3 * * *'
+
+  release:
+    types: [published]
+
+  issues:
+    types: [opened, labeled]
+
+  issue_comment:
+    types: [created]
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Show what triggered this run
+        run: |
+          echo "========================================"
+          echo "Event that triggered this workflow:"
+          echo "${{ github.event_name }}"
+          echo "========================================"
+          echo "Branch / Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "========================================"
+
+      - name: Show manual inputs (only if workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Environment chosen: ${{ inputs.environment }}"
+          echo "Reason: ${{ inputs.reason }}"
+
+      - name: Success message
+        run: echo "✅ Workflow ran successfully!"
