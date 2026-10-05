@@ -16,3 +16,12 @@ Day 2 Reflection:
 - Authorization fatigue = too many prompts train me to click blindly,
   which is LESS safe than fewer, meaningful prompts.
 - Termux quirk: Codex needs --force because Android != linux for npm.
+
+Day 2 Reflection:
+- Sandbox mode controls REACH (what the agent can technically touch).
+- Approval policy controls PERMISSION (when the agent must ask first).
+- workspace-write + on-request = edits flow freely inside my project,
+  but escaping the boundary requires my explicit yes.
+- Authorization fatigue = too many prompts train me to click blindly,
+  which is LESS safe than fewer, meaningful prompts.
+- Termux quirk: Codex needs --force because Android != linux for npm.
