@@ -1,0 +1,19 @@
+[project]
+name = "stage1-basics"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "escorpioantares66-cmyk", email = "325410391+escorpioantares66-cmyk@users.noreply.github.com." }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "requests>=2.34.2",
+]
+
+[project.scripts]
+stage1-basics = "stage1_basics:main"
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
