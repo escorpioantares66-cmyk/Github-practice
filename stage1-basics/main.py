@@ -1,13 +1,6 @@
-import requests
+from src.stage1_basics.config import AppConfig
+from src.stage1_basics.client import APIClient
 
-def fetch_status(url: str) -> int:
-    r = requests.get(url, timeout=5)
-    return r.status_code
-
-def main() -> None:
-    url: str = "https://httpbin.org/get"
-    code: int = fetch_status(url)
-    print(f"Success! Day 1 done. Status = {code} from {url}")
-
-if __name__ == "__main__":
-    main()
+config = AppConfig(base_url="https://api.example.com", api_key="test123")
+client = APIClient(config)
+print(client.get("/status"))
