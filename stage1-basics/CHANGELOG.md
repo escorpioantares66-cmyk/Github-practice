@@ -46,3 +46,10 @@ Last verified: 2026-05-13 - Week2-http branch - 6 source files - Professional St
 - Checks: `ruff: All checks passed!` + `mypy: Success: no issues in 7 source files`
 - Proof: Test 1 coalescing ~1x time, Test 2 cache hit 0.000x s, Test 3 Semaphore still works
 - Trust: Built on `366eb0e` ledger
+
+## Day 12 - Persistent Cache + Metrics
+- Commit: Day12 persistent cache - built on 2712c9b (.gitignore)
+- Changes: CacheMetrics (hits/misses/coalesced/network_calls/hit_rate), disk persistence.cache/http_cache.json
+- Feature: survives restart, 5 concurrent identical -> 1 network_call + 4 coalesced
+- Checks: ruff All checks passed + mypy Success 7 files
+- Proof: Test2 cached=True 0.0000s, Test3 disk hit True, Test4 network_calls=1 coalesced=4
