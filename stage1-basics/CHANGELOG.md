@@ -37,3 +37,12 @@ Standard for every day: `ruff check` + `ruff format` + `mypy strict` + `httpx.As
 4. If `Everything up-to-date` appears, that attempt is logged as FAILED and not counted
 
 Last verified: 2026-05-13 - Week2-http branch - 6 source files - Professional Standard
+
+## Day 11 - Caching + Idempotency (Current)
+- Commit: Day11 - `TTLCache` + request coalescing
+- Changes: New `src/stage1_basics/cache.py` (TTLCache with monotonic expiry), `_PENDING` dict for idempotent concurrent fetches
+- Feature: Cache hit returns `cached=True` + `elapsed=0.0`, no network
+- Feature: 3x identical concurrent requests -> 1 network call
+- Checks: `ruff: All checks passed!` + `mypy: Success: no issues in 7 source files`
+- Proof: Test 1 coalescing ~1x time, Test 2 cache hit 0.000x s, Test 3 Semaphore still works
+- Trust: Built on `366eb0e` ledger
