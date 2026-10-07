@@ -22,7 +22,6 @@ async def fetch(
         "Content-Type": "application/json",
     }
     timeout = httpx.Timeout(10.0)
-
     last_exc: Exception | None = None
 
     for attempt in range(retries):
@@ -70,9 +69,10 @@ async def main() -> None:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
     for path, result in zip(paths, results, strict=True):
-        if isinstance(result, Exception):
+        if isinstance(result, BaseException):
             print(f"ERROR {path} -> {type(result).__name__}: {result}")
         else:
+            # mypy now knows result is dict[str, Any]
             print(f"OK {result['status']} {result['url']}")
 
 
