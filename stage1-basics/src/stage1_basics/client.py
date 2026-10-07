@@ -92,10 +92,8 @@ async def fetch(
 
 async def main() -> None:
     cfg = load_config()
-    print(f"Using BASE_URL: {cfg.base_url} | Concurrency: 3 | Cache TTL: {CACHE.ttl}s")
-    print(
-        f"Persistent cache: {CACHE.persist_path} | Exists: {CACHE.persist_path.exists()}"
-    )
+    print(f"Using BASE_URL: {cfg.base_url} | Concurrency: 3 | TTL: {CACHE.ttl}s")
+    print(f"Cache path: {CACHE.persist_path} | Exists: {CACHE.persist_path.exists()}")
 
     print("\n--- Test 1: Populate cache (network) ---")
     CACHE.clear()
@@ -115,20 +113,19 @@ async def main() -> None:
     new_cache = TTLCache(ttl=300.0, persist_path=CACHE.persist_path)
     print(f"New instance loaded {len(new_cache)} entries from disk")
     cached = new_cache.get("https://httpbin.org/get?day12=1")
-    print(
-        f"Disk cache hit: {cached is not None} | Hit rate: {new_cache.metrics.hit_rate:.1f}%"
-    )
+    print(f"Disk hit: {cached is not None} | Rate: {new_cache.metrics.hit_rate:.1f}%")
 
     print("\n--- Test 4: Coalescing + full metrics ---")
     CACHE.clear()
     async with httpx.AsyncClient() as client:
-        results = await asyncio.gather(
+        await asyncio.gather(
             *[fetch(client, cfg, "/get?day12=coalesce") for _ in range(5)],
             return_exceptions=True,
         )
-    print(
-        f"5 concurrent identical -> network_calls={CACHE.metrics.network_calls}, coalesced={CACHE.metrics.coalesced}"
-    )
+        print(
+            f"5 concurrent -> calls={CACHE.metrics.network_calls}, "
+            f"coalesced={CACHE.metrics.coalesced}"
+        )
     print(f"Final metrics: {CACHE.metrics.to_dict()}")
 
 
