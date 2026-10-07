@@ -2,3 +2,6 @@
 __pycache__/
 .env
 *.pyc
+.cache/
+__pycache__/
+.mypy_cache/
