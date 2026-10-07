@@ -12,8 +12,7 @@ from stage1_basics.config import AppConfig, load_config
 from stage1_basics.errors import ApiError, AuthError, NotFoundError, ServerError
 
 SEMAPHORE = asyncio.Semaphore(3)
-CACHE = TTLCache(ttl=60.0)
-# For idempotency: if same URL is already being fetched, others wait for it
+CACHE = TTLCache(ttl=300.0)
 _PENDING: dict[str, asyncio.Future[dict[str, Any]]] = {}
 
 
@@ -32,8 +31,8 @@ async def fetch(
         if cached is not None:
             return {**cached, "cached": True, "elapsed": 0.0}
 
-    # Idempotency / coalescing
     if cache_key in _PENDING:
+        CACHE.metrics.coalesced += 1
         return await _PENDING[cache_key]
 
     loop = asyncio.get_running_loop()
@@ -94,53 +93,43 @@ async def fetch(
 async def main() -> None:
     cfg = load_config()
     print(f"Using BASE_URL: {cfg.base_url} | Concurrency: 3 | Cache TTL: {CACHE.ttl}s")
+    print(
+        f"Persistent cache: {CACHE.persist_path} | Exists: {CACHE.persist_path.exists()}"
+    )
 
-    # 1. Test coalescing - 3 identical requests at same time should do 1 network call
-    print("\n--- Test 1: Request Coalescing (3x same URL concurrently) ---")
+    print("\n--- Test 1: Populate cache (network) ---")
     CACHE.clear()
-    paths_same = ["/get?cache=test" for _ in range(3)]
     async with httpx.AsyncClient() as client:
-        start = time.perf_counter()
+        r1 = await fetch(client, cfg, "/get?day12=1")
+    print(f"OK {r1['status']} cached={r1['cached']} | Cache size: {len(CACHE)}")
+    print(f"Metrics: {CACHE.metrics.to_dict()}")
+    print(f"Disk cache written: {CACHE.persist_path.exists()}")
+
+    print("\n--- Test 2: Memory hit ---")
+    async with httpx.AsyncClient() as client:
+        r2 = await fetch(client, cfg, "/get?day12=1")
+    print(f"OK {r2['status']} cached={r2['cached']} in {r2['elapsed']:.4f}s")
+    print(f"Metrics: {CACHE.metrics.to_dict()}")
+
+    print("\n--- Test 3: Persistent hit after 'restart' ---")
+    new_cache = TTLCache(ttl=300.0, persist_path=CACHE.persist_path)
+    print(f"New instance loaded {len(new_cache)} entries from disk")
+    cached = new_cache.get("https://httpbin.org/get?day12=1")
+    print(
+        f"Disk cache hit: {cached is not None} | Hit rate: {new_cache.metrics.hit_rate:.1f}%"
+    )
+
+    print("\n--- Test 4: Coalescing + full metrics ---")
+    CACHE.clear()
+    async with httpx.AsyncClient() as client:
         results = await asyncio.gather(
-            *[fetch(client, cfg, p) for p in paths_same], return_exceptions=True
+            *[fetch(client, cfg, "/get?day12=coalesce") for _ in range(5)],
+            return_exceptions=True,
         )
-        elapsed_same = time.perf_counter() - start
-
-    for r in results:
-        if isinstance(r, BaseException):
-            print(f"ERROR -> {r}")
-        else:
-            print(f"OK {r['status']} cached={r['cached']} in {r['elapsed']:.2f}s")
     print(
-        f"3 identical concurrent requests finished in {elapsed_same:.2f}s (should be ~1x network time)"
+        f"5 concurrent identical -> network_calls={CACHE.metrics.network_calls}, coalesced={CACHE.metrics.coalesced}"
     )
-
-    # 2. Test cache hit - second call should be instant
-    print("\n--- Test 2: Cache Hit (same URL again) ---")
-    async with httpx.AsyncClient() as client:
-        start = time.perf_counter()
-        result_cached = await fetch(client, cfg, "/get?cache=test")
-        elapsed_cached = time.perf_counter() - start
-    print(
-        f"OK {result_cached['status']} cached={result_cached['cached']} in {elapsed_cached:.4f}s"
-    )
-    print(f"Cache size: {len(CACHE)} entry")
-
-    # 3. Test normal concurrent with semaphore still works
-    print("\n--- Test 3: Normal concurrent (6x delay/1) with cache disabled ---")
-    CACHE.clear()
-    paths_delay = [f"/delay/1?test={i}" for i in range(1, 7)]
-    overall_start = time.perf_counter()
-    async with httpx.AsyncClient() as client:
-        tasks = [fetch(client, cfg, p, use_cache=False) for p in paths_delay]
-        results_delay = await asyncio.gather(*tasks, return_exceptions=True)
-    overall = time.perf_counter() - overall_start
-    for p, r in zip(paths_delay, results_delay, strict=True):
-        if isinstance(r, BaseException):
-            print(f"ERROR {p} -> {type(r).__name__}: {r}")
-        else:
-            print(f"OK {r['status']} {r['url']} in {r['elapsed']:.2f}s")
-    print(f"Total: {len(paths_delay)} requests in {overall:.2f}s with Semaphore(3)")
+    print(f"Final metrics: {CACHE.metrics.to_dict()}")
 
 
 if __name__ == "__main__":
