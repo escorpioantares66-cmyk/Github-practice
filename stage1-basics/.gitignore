@@ -5,3 +5,14 @@ __pycache__/
 .cache/
 __pycache__/
 .mypy_cache/
+# --- Professional hygiene ---
+.env
+.env.example
+.env.local
+*.log
+*.tmp
+.o2a*
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
