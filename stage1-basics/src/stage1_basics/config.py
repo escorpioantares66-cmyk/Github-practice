@@ -1,9 +1,19 @@
+from __future__ import annotations
+
 import os
+from dataclasses import dataclass
 from pathlib import Path
+
 from dotenv import load_dotenv
 
-def load_config() -> dict[str, str]:
-    # Load.env from project root
+
+@dataclass(frozen=True, slots=True)
+class AppConfig:
+    base_url: str
+    api_key: str
+
+
+def load_config() -> AppConfig:
     env_path = Path(__file__).resolve().parents[2] / ".env"
     load_dotenv(dotenv_path=env_path, override=True)
 
@@ -13,4 +23,4 @@ def load_config() -> dict[str, str]:
     if not base_url or not api_key:
         raise ValueError("BASE_URL and API_KEY must be set in.env")
 
-    return {"BASE_URL": base_url, "API_KEY": api_key}
+    return AppConfig(base_url=base_url.rstrip("/"), api_key=api_key)

@@ -1,37 +1,41 @@
+from __future__ import annotations
+
 import asyncio
 from typing import Any
+
 import httpx
 
-from stage1_basics.config import load_config
+from stage1_basics.config import AppConfig, load_config
 
-async def fetch(
-    client: httpx.AsyncClient, path: str
-) -> dict[str, Any]:
-    cfg = load_config()
-    url = f"{cfg['BASE_URL'].rstrip('/')}{path}"
+
+async def fetch(client: httpx.AsyncClient, cfg: AppConfig, path: str) -> dict[str, Any]:
+    url = f"{cfg.base_url}{path}"
     headers = {
-        "Authorization": f"Bearer {cfg['API_KEY']}",
+        "Authorization": f"Bearer {cfg.api_key}",
         "Content-Type": "application/json",
     }
-    resp = await client.get(url, headers=headers, timeout=10.0)
+    timeout = httpx.Timeout(10.0)
+    resp = await client.get(url, headers=headers, timeout=timeout)
     resp.raise_for_status()
     return {
-        "url": url,
+        "url": str(resp.url),
         "status": resp.status_code,
         "data": resp.json(),
     }
 
+
 async def main() -> None:
     cfg = load_config()
-    print(f"Using BASE_URL: {cfg['BASE_URL']}")
+    print(f"Using BASE_URL: {cfg.base_url}")
     async with httpx.AsyncClient() as client:
         results = await asyncio.gather(
-            fetch(client, "/get?test=1"),
-            fetch(client, "/get?test=2"),
-            fetch(client, "/get?test=3"),
+            fetch(client, cfg, "/get?test=1"),
+            fetch(client, cfg, "/get?test=2"),
+            fetch(client, cfg, "/get?test=3"),
         )
     for r in results:
         print(r["status"], r["url"])
+
 
 if __name__ == "__main__":
     asyncio.run(main())
