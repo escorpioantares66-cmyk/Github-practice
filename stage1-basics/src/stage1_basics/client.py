@@ -1,31 +1,37 @@
 import asyncio
 from typing import Any
-
 import httpx
 
-from stage1_basics.config import AppConfig
+from stage1_basics.config import load_config
 
-class APIClient:
-    """Async client that talks to external APIs without blocking."""
+async def fetch(
+    client: httpx.AsyncClient, path: str
+) -> dict[str, Any]:
+    cfg = load_config()
+    url = f"{cfg['BASE_URL'].rstrip('/')}{path}"
+    headers = {
+        "Authorization": f"Bearer {cfg['API_KEY']}",
+        "Content-Type": "application/json",
+    }
+    resp = await client.get(url, headers=headers, timeout=10.0)
+    resp.raise_for_status()
+    return {
+        "url": url,
+        "status": resp.status_code,
+        "data": resp.json(),
+    }
 
-    def __init__(self, config: AppConfig) -> None:
-        self.config = config
-        self._client = httpx.AsyncClient(
-            base_url=config.base_url,
-            headers=config.headers,
+async def main() -> None:
+    cfg = load_config()
+    print(f"Using BASE_URL: {cfg['BASE_URL']}")
+    async with httpx.AsyncClient() as client:
+        results = await asyncio.gather(
+            fetch(client, "/get?test=1"),
+            fetch(client, "/get?test=2"),
+            fetch(client, "/get?test=3"),
         )
+    for r in results:
+        print(r["status"], r["url"])
 
-    def _build_url(self, endpoint: str) -> str:
-        return f"{self.config.base_url}{endpoint}"
-
-    @property
-    def auth_header(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.config.api_key}"}
-
-    async def get(self, endpoint: str) -> dict[str, Any]:
-        url = self._build_url(endpoint)
-        await asyncio.sleep(1)
-        return {"url": url, "headers": {**self.config.headers, **self.auth_header}}
-
-    async def close(self) -> None:
-        await self._client.aclose()
+if __name__ == "__main__":
+    asyncio.run(main())
