@@ -53,3 +53,24 @@ Last verified: 2026-05-13 - Week2-http branch - 6 source files - Professional St
 - Feature: survives restart, 5 concurrent identical -> 1 network_call + 4 coalesced
 - Checks: ruff All checks passed + mypy Success 7 files
 - Proof: Test2 cached=True 0.0000s, Test3 disk hit True, Test4 network_calls=1 coalesced=4
+
+## Day 14 - 2026-05-13 - LOCKED
+- Fixed lint: F401, E501
+- Fixed network: SSH 22 & 443 blocked on Termux
+- Solution: gh auth + https protocol
+- Push: 7 objects, 1.98 KiB, 72a3358..6d04dac -> week2-http
+- Auth: ghp_**** scopes repo, workflow, gist
+- Result: working tree clean, Stage 1 14/14 DONE
+
+## Day 14 - Cache + Coalescing + Circuit Breaker + Retries + Secure Push (STAGE 1 LOCKED)
+- Commit: `72a3358..6d04dac` -> `week2-http -> week2-http - Day 14 final`
+- Changes: Integrated Cache + Coalescing + CircuitBreaker + Retry with jitter, `httpx.AsyncClient` + `asyncio.gather`
+- Fixes: F401 (unused import), E501 (line too long), SSH port 22 blocked, HTTPS port 443 blocked - root cause Termux carrier filter
+- Solution: Migrated from `git@github.com:` SSH to `https://github.com/` + `gh auth git-credential` helper (`!/data/data/com.termux/files/usr/bin/gh auth git-credential`)
+- Auth: `✓ Logged in to github.com as escorpioantares66-cmyk`, Protocol: https, Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+- Proof: `Writing objects: 100% (7/7), 1.98 KiB`, `Total 7 (delta 3)` - `ghp_****` vaulted in `~/.config/gh/hosts.yml`
+- Checks: `ruff: All checks passed!`, `mypy: Success: no issues found in 7 source files`, `git status: working tree clean`
+- Security: No `~/.git-credentials` plaintext, using secure gh vault with `chmod 600` equivalent, `.gitconfig 310 bytes -rw-------`
+- Trust: Rule #1 PASS (delta 3 > 0), Rule #2 PASS (ruff + mypy green), Rule #3 PASS (hash 6d04dac matches log), Rule #4 PASS (no Everything up-to-date)
+- Result: **STAGE 1: 14/14 LOCKED** 🔒
+Last verified: 2026-05-13 - week2-http - 7 source files - Professional Standard

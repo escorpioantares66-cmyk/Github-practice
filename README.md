@@ -1,76 +1,15 @@
-name: All Common Triggers Demo
+# Github-practice - 100 Days of Code
+## STAGE 1: 14/14 LOCKED 🔒
 
-on:
-  push:
-    branches: [ main, develop ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+Trust Ledger in `stage1-basics/CHANGELOG.md`
 
-  pull_request:
-    branches: [ main ]
-    types: [opened, synchronize, reopened]
+## Streak
+- [x] Day 8: Real Async HTTP + Professional Refactor
+- [x] Day 9: Resilient Client + Mypy Fix (BaseException)
+- [x] Day 10: Concurrency Control Semaphore(3)
+- [x] Day 11: Caching + Idempotency (TTLCache + coalescing)
+- [x] Day 12: Persistent Cache + Metrics
+- [x] Day 13: Circuit Breaker + Retry Integration
+- [x] Day 14: Final HTTP Client + Secure gh HTTPS Push - **STAGE 1 COMPLETE** (72a3358..6d04dac, 7 objects, 1.98 KiB)
 
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Choose environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-      reason:
-        description: 'Why are you running this?'
-        required: false
-        type: string
-
-  schedule:
-    - cron: '0 3 * * *'
-
-  release:
-    types: [published]
-
-  issues:
-    types: [opened, labeled]
-
-  issue_comment:
-    types: [created]
-
-jobs:
-  demo:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Show trigger information
-        run: |
-          echo "========================================"
-          echo "Event that triggered this workflow: ${{ github.event_name }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "========================================"
-
-      - name: Show manual inputs (only on manual run)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          echo "Environment: ${{ inputs.environment }}"
-          echo "Reason: ${{ inputs.reason }}"
-
-      - name: Show current date and time
-        run: |
-          echo "Current date and time:"
-          date
-
-      - name: List files in the repository
-        run: |
-          echo "Files in the repository:"
-          ls -la
-
-      - name: Success message
-        run: |
-          echo "✅ Workflow completed successfully!"
-          echo "Repository: ${{ github.repository }}"
+Auth: gh auth git-credential, Protocol https, Logged in as escorpioantares66-cmyk
