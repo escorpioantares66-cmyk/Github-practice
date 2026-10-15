@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import random
 import time
 from typing import Any
 
@@ -10,17 +9,21 @@ import httpx
 from stage1_basics.cache import TTLCache
 from stage1_basics.config import AppConfig, load_config
 from stage1_basics.errors import ApiError, AuthError, NotFoundError, ServerError
+from stage1_basics.http import CircuitBreaker, RetryPolicy, exponential_backoff
 
 SEMAPHORE = asyncio.Semaphore(3)
 CACHE = TTLCache(ttl=300.0)
 _PENDING: dict[str, asyncio.Future[dict[str, Any]]] = {}
+
+RETRY_POLICY = RetryPolicy(max_retries=3, base_delay=0.2, max_delay=5.0)
+CIRCUIT = CircuitBreaker(failure_threshold=3, recovery_timeout=30.0)
 
 
 async def fetch(
     client: httpx.AsyncClient,
     cfg: AppConfig,
     path: str,
-    retries: int = 3,
+    retries: int | None = None,
     use_cache: bool = True,
 ) -> dict[str, Any]:
     url = f"{cfg.base_url}{path}"
@@ -39,16 +42,23 @@ async def fetch(
     future: asyncio.Future[dict[str, Any]] = loop.create_future()
     _PENDING[cache_key] = future
 
+    if not CIRCUIT.can_execute():
+        err = ApiError(f"Circuit {CIRCUIT.state.value} open - fail fast: {url}")
+        future.set_exception(err)
+        raise err
+
     headers = {
         "Authorization": f"Bearer {cfg.api_key}",
         "Content-Type": "application/json",
     }
     timeout = httpx.Timeout(10.0)
     last_exc: Exception | None = None
+    policy = RETRY_POLICY
+    max_attempts = retries if retries is not None else policy.max_retries
 
     try:
         async with SEMAPHORE:
-            for attempt in range(retries):
+            for attempt in range(max_attempts):
                 try:
                     start = time.perf_counter()
                     resp = await client.get(url, headers=headers, timeout=timeout)
@@ -58,7 +68,7 @@ async def fetch(
                         raise AuthError(f"401 Unauthorized: {url} ({elapsed:.2f}s)")
                     if resp.status_code == 404:
                         raise NotFoundError(f"404 Not Found: {url} ({elapsed:.2f}s)")
-                    if resp.status_code == 429 or 500 <= resp.status_code < 600:
+                    if resp.status_code in policy.retry_on:
                         raise ServerError(f"{resp.status_code} Retryable: {url}")
 
                     resp.raise_for_status()
@@ -68,20 +78,27 @@ async def fetch(
                         "elapsed": elapsed,
                         "data": resp.json(),
                         "cached": False,
+                        "retries": attempt,
+                        "circuit": CIRCUIT.state.value,
                     }
                     if use_cache:
                         CACHE.set(cache_key, result)
+
+                    CIRCUIT.record_success()
                     future.set_result(result)
                     return result
 
                 except (ServerError, httpx.RequestError, httpx.HTTPStatusError) as exc:
                     last_exc = exc
-                    if attempt == retries - 1:
+                    CIRCUIT.record_failure()
+                    if attempt == max_attempts - 1:
                         break
-                    backoff = (2**attempt) + random.uniform(0, 0.5)
-                    await asyncio.sleep(backoff)
+                    delay = exponential_backoff(
+                        attempt, policy.base_delay, policy.max_delay, policy.jitter
+                    )
+                    await asyncio.sleep(delay)
 
-        err = ApiError(f"Failed after {retries} retries: {url}")
+        err = ApiError(f"Failed after {max_attempts} retries: {url}")
         err.__cause__ = last_exc
         future.set_exception(err)
         raise err
@@ -92,8 +109,9 @@ async def fetch(
 
 async def main() -> None:
     cfg = load_config()
-    print(f"Using BASE_URL: {cfg.base_url} | Concurrency: 3 | TTL: {CACHE.ttl}s")
+    print(f"Using BASE_URL: {cfg.base_url} | Conc: 3 | TTL: {CACHE.ttl}s")
     print(f"Cache path: {CACHE.persist_path} | Exists: {CACHE.persist_path.exists()}")
+    print(f"Circuit: {CIRCUIT.state.value} | Retries: {RETRY_POLICY.max_retries}")
 
     print("\n--- Test 1: Populate cache (network) ---")
     CACHE.clear()
@@ -118,13 +136,14 @@ async def main() -> None:
     print("\n--- Test 4: Coalescing + full metrics ---")
     CACHE.clear()
     async with httpx.AsyncClient() as client:
-        await asyncio.gather(
+        results = await asyncio.gather(
             *[fetch(client, cfg, "/get?day12=coalesce") for _ in range(5)],
             return_exceptions=True,
         )
+        ok = sum(1 for r in results if isinstance(r, dict))
         print(
-            f"5 concurrent -> calls={CACHE.metrics.network_calls}, "
-            f"coalesced={CACHE.metrics.coalesced}"
+            f"5 concurrent -> ok={ok} calls={CACHE.metrics.network_calls} "
+            f"coalesced={CACHE.metrics.coalesced} circuit={CIRCUIT.state.value}"
         )
     print(f"Final metrics: {CACHE.metrics.to_dict()}")
 
