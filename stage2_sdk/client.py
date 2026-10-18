@@ -1,6 +1,9 @@
 import json
 import urllib.request
+
 from models import User
+
+
 def get_user(user_id: int) -> User:
     url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
     with urllib.request.urlopen(url, timeout=10) as r:

@@ -1,4 +1,5 @@
 from client import get_user
+
 print("Test fetch user 1 from jsonplaceholder")
 try:
     u = get_user(1)

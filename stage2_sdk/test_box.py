@@ -1,4 +1,5 @@
 from models import User
+
 print("Test 1: Good")
 try:
     u = User(id=1, name="Brian", email="brian@gmail.com", age=25)
