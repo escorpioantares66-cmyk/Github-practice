@@ -1,12 +1,11 @@
-from dataclasses import dataclass
-from typing import Optional
 import re
+from dataclasses import dataclass
 @dataclass
 class User:
     id: int
     name: str
     email: str
-    age: Optional[int] = None
+    age: int | None = None
     def __post_init__(self):
         if self.id <= 0:
             raise ValueError("id must be > 0")
