@@ -2,7 +2,10 @@ import json
 import time
 import urllib.error
 import urllib.request
+
 from models import User
+
+
 def get_user(user_id: int, retries: int = 3) -> User:
     url = f"https://jsonplaceholder.typicode.com/users/{user_id}"
     last_err = None

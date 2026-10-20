@@ -1,4 +1,5 @@
 from client import get_user, get_users
+
 print("Test get_user(1)")
 print(get_user(1))
 print("\nTest get_users()")
