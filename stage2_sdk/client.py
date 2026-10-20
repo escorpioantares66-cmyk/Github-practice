@@ -18,6 +18,7 @@ def get_user(user_id: int, retries: int = 3) -> User:
             last_err = e
             time.sleep(1)
     raise last_err
+
 def get_users(retries: int = 3) -> list[User]:
     url = "https://jsonplaceholder.typicode.com/users"
     last_err = None
@@ -30,6 +31,13 @@ def get_users(retries: int = 3) -> list[User]:
             last_err = e
             time.sleep(1)
     raise last_err
+
+def search_users(name: str) -> list[User]:
+    all_users = get_users()
+    q = name.lower()
+    return [u for u in all_users if q in u.name.lower()]
+
 if __name__ == "__main__":
     print(get_user(1))
-    print(f"Total users: {len(get_users())}")
+    print(f"Total: {len(get_users())}")
+    print(search_users("Clementine"))
