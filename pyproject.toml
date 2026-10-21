@@ -1,16 +1,36 @@
 [project]
 name = "github-practice"
-version = "0.4.0"
-description = "SDK and CLI for users"
+version = "0.4.1"
+description = "Production-ready SDK + CLI for JSONPlaceholder Users API"
+readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["requests"]
+license = { file = "LICENSE" }
+authors = [{ name = "escorpioantares66" }]
+dependencies = ["requests>=2.28.0"]
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/escorpioantares66-cmyk/Github-practice"
+Repository = "https://github.com/escorpioantares66-cmyk/Github-practice"
 
 [project.scripts]
 practice-cli = "stage3_cli.cli:main"
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["stage2_sdk*", "stage3_cli*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
