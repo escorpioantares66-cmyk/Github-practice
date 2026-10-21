@@ -1,5 +1,5 @@
-import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -7,13 +7,13 @@ class User:
     id: int
     name: str
     email: str
-    age: int | None = None
-    def __post_init__(self):
-        if self.id <= 0:
-            raise ValueError("id must be > 0")
-        if len(self.name) < 2:
-            raise ValueError("name must have at least 2 letters")
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
-            raise ValueError("email must have @ like bob@gmail.com")
-        if self.age is not None and not (0 <= self.age <= 120):
-            raise ValueError("age must be 0-120")
+    username: str = ""
+    phone: str = ""
+    website: str = ""
+    address: dict[str, Any] = field(default_factory=dict)
+    company: dict[str, Any] = field(default_factory=dict)
+
+    def __str__(self):
+        return f"User(id={self.id}, name='{self.name}', username='{self.username}', email='{self.email}')"
+
+    __repr__ = __str__
