@@ -1,6 +1,25 @@
-# github-practice
+> ## 🚀 FROZEN at v1.0.0 — SDK Fundamentals Complete
+> **30 Days of Code — From Delta 0 to PyPI 0.4.2 — Built Mobile-First on Termux in Nairobi**
+>
+> This repo is my **portfolio story** for production-ready Python SDK engineering. It is now **ARCHIVED and READ-ONLY**.
+>
+> - ✅ Stage 1: 14/14 LOCKED — `httpx.AsyncClient`, `AppConfig(frozen=True)`, `Semaphore(3)`, `TTLCache`, `APIError` handling
+> - ✅ Stage 2: SDK + CLI shipped to **PyPI 0.4.2** — `pip install github-practice==0.4.2`
+> - ✅ CI: Green — Fixed `ModuleNotFoundError` with `pip install -e .`
+> - ✅ Trust Ledger: `Total 5 (delta 1)` → `Total 6 (delta 1)` with v1.0.0 tag
+>
+> **PyPI:** https://pypi.org/project/github-practice/0.4.2/
+> **Certificate:** `assets/certificate-final.png` (scannable QR)
+>
+> ### For AI Engineering Evolution →
+> **See my next repo: `github-practice-ai`**
+> This new repo reuses this package as a dependency: `github-practice==0.4.2` + `openai` + `chromadb`
+> That is where I master AI Engineering — RAG, Tools, Evals, Streaming.
+>
+> **This repo will not receive AI features. It is frozen to keep the story clean.**
+> *— Lee Cooper (hombre.holmes) — Oct 21, 2026 — Nairobi, KE*
 
-[![ci](https://github.com/escorpioantares66-cmyk/Github-practice/actions/workflows/ci.yml/badge.svg)](https://github.com/escorpioantares66-cmyk/Github-practice/actions/workflows/ci.yml)
+---[![ci](https://github.com/escorpioantares66-cmyk/Github-practice/actions/workflows/ci.yml/badge.svg)](https://github.com/escorpioantares66-cmyk/Github-practice/actions/workflows/ci.yml)
 
 A production-ready Python SDK + CLI for JSONPlaceholder Users API. Built mobile-first on Termux.
 
