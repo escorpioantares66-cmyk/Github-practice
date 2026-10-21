@@ -1,5 +1,6 @@
 from stage2_sdk import get_user, get_users, search_users
 
+
 def test_get_user():
     u = get_user(1)
     assert u.id == 1
